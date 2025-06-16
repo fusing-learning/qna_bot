@@ -30,22 +30,22 @@ This phase focuses on getting the basic document processing and Q&A functionalit
   - [x] Create storage for document chunks
 
 ### 3.0 Basic Q&A Engine
-- [ ] **3.1 Implement core RAG logic**
-  - [ ] Create basic prompt template
-  - [ ] Implement context retrieval
-  - [ ] Set up OpenAI API integration
+- [x] **3.1 Implement core RAG logic**
+  - [x] Create basic prompt template
+  - [x] Implement context retrieval
+  - [x] Set up OpenAI API integration
 
-- [ ] **3.2 Implement answer generation**
-  - [ ] Basic answer formatting
-  - [ ] Source citation handling
+- [x] **3.2 Implement answer generation**
+  - [x] Basic answer formatting
+  - [x] Source citation handling
 
 ## Phase 2: Basic Web Interface & Document Management
 This phase adds a simple web interface and basic document management capabilities.
 
 ### 4.0 Basic Web Interface
-- [ ] **4.1 Set up Streamlit frontend**
-  - [ ] Create basic chat interface
-  - [ ] Implement message history display
+- [x] **4.1 Set up Streamlit frontend**
+  - [x] Create basic chat interface
+  - [x] Implement message history display
 
 - [ ] **4.2 Implement FastAPI backend**
   - [ ] Create /chat endpoint
