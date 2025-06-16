@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     
     # Vector Store Configuration
-    CHROMA_PERSIST_DIRECTORY: str = "./data/vector_store"
+    CHROMA_PERSIST_DIRECTORY: str = "./data/chroma"
     
     # API Configuration
     API_HOST: str = "0.0.0.0"

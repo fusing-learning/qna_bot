@@ -2,12 +2,10 @@ import os
 from pathlib import Path
 from typing import List, Dict
 import chromadb
-from chromadb.config import Settings
 from src.core.config import settings
 
 RAW_DATA_DIR = Path("data/raw")
 SUPPORTED_EXTENSIONS = {".txt", ".md"}
-# CHROMA_PERSIST_DIR = Path("data/vector_store")
 CHROMA_PERSIST_DIR = Path(settings.CHROMA_PERSIST_DIRECTORY)
 
 def list_documents(directory: Path = RAW_DATA_DIR) -> List[Path]:
@@ -41,10 +39,11 @@ def chunk_document(doc: Dict, chunk_size: int = 1000) -> List[Dict]:
     return chunks
 
 def setup_chroma_db():
-    """Initialize ChromaDB and return a client."""
+    """Initialize ChromaDB and return a persistent client."""
     os.makedirs(CHROMA_PERSIST_DIR, exist_ok=True)
     print(f"Initializing ChromaDB with persist directory: {CHROMA_PERSIST_DIR}")
-    return chromadb.Client(Settings(persist_directory=str(CHROMA_PERSIST_DIR), anonymized_telemetry=False))
+    # Use PersistentClient instead of Client with Settings
+    return chromadb.PersistentClient(path=str(CHROMA_PERSIST_DIR))
 
 def store_chunks_in_chroma(chunks: List[Dict], collection_name: str = "documents"):
     """Store document chunks in ChromaDB as vector embeddings."""
@@ -52,23 +51,41 @@ def store_chunks_in_chroma(chunks: List[Dict], collection_name: str = "documents
     print(f"Creating or getting collection: {collection_name}")
     collection = client.get_or_create_collection(collection_name)
     print(f"Collection created: {collection_name}")
-    for chunk in chunks:
-        print(f"Storing chunk: {chunk['filename']}_{chunk['chunk_id']}")
+    
+    # Process chunks in batches to avoid potential issues
+    batch_size = 100
+    for i in range(0, len(chunks), batch_size):
+        batch = chunks[i:i + batch_size]
+        documents = [chunk["content"] for chunk in batch]
+        metadatas = [{
+            "filename": chunk["filename"],
+            "filepath": chunk["filepath"],
+            "filetype": chunk["filetype"],
+            "chunk_id": chunk["chunk_id"],
+        } for chunk in batch]
+        ids = [f"{chunk['filename']}_{chunk['chunk_id']}" for chunk in batch]
+        
+        print(f"Storing batch {i//batch_size + 1}: {len(batch)} chunks")
         collection.add(
-            documents=[chunk["content"]],
-            metadatas=[{
-                "filename": chunk["filename"],
-                "filepath": chunk["filepath"],
-                "filetype": chunk["filetype"],
-                "chunk_id": chunk["chunk_id"],
-            }],
-            ids=[f"{chunk['filename']}_{chunk['chunk_id']}"],
+            documents=documents,
+            metadatas=metadatas,
+            ids=ids,
         )
+    
     print(f"Stored {len(chunks)} chunks in collection: {collection_name}")
+    
+    # Verify the data was stored
+    count = collection.count()
+    print(f"Collection now contains {count} total documents")
 
 def main():
     docs = list_documents()
     print(f"Found {len(docs)} supported documents in {RAW_DATA_DIR}.")
+    
+    if not docs:
+        print("No documents found. Make sure you have .txt or .md files in the data/raw directory.")
+        return
+    
     for doc_path in docs:
         doc = load_document(doc_path)
         if not doc["content"].strip():
@@ -79,6 +96,9 @@ def main():
         print(f"Chunked into {len(chunks)} chunks.")
         store_chunks_in_chroma(chunks)
         print(f"Stored chunks in ChromaDB.")
+    
+    print(f"\nIngestion complete! Check the directory: {CHROMA_PERSIST_DIR}")
+    print("You should see database files like 'chroma.sqlite3' in that directory.")
 
 if __name__ == "__main__":
-    main() 
+    main()
