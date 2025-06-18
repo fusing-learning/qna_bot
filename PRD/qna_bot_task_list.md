@@ -47,9 +47,9 @@ This phase adds a simple web interface and basic document management capabilitie
   - [x] Create basic chat interface
   - [x] Implement message history display
 
-- [ ] **4.2 Implement FastAPI backend**
-  - [ ] Create /chat endpoint
-  - [ ] Set up basic error handling
+- [x] **4.2 Implement FastAPI backend**
+  - [x] Create /chat endpoint
+  - [x] Set up basic error handling
 
 ### 5.0 Basic Document Management
 - [ ] **5.1 Implement document upload**
