@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development Commands
 - **Start Streamlit UI**: `./scripts/run_app.sh` or `streamlit run src/ui/app.py`
+- **Start Admin UI**: `streamlit run src/ui/admin.py`
 - **Start FastAPI backend**: `./scripts/run_api.sh` or `python -m uvicorn src.app.api:app --host 0.0.0.0 --port 8000 --reload`
 - **Run data ingestion**: `./scripts/ingest_data.sh` or `python -m src.ingestion.ingest`
 - **Run tests**: `pytest tests/`
@@ -31,7 +32,7 @@ export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 - **Configuration** (`src/core/config.py`): Centralized settings using Pydantic with environment variable loading
 
 ### Data Flow
-1. Documents are placed in `data/raw/` or uploaded via API
+1. Documents are uploaded via API to `data/uploads/`
 2. Ingestion service (`src/ingestion/ingest.py`) processes documents and stores vectors in ChromaDB
 3. User queries are processed by RAG engine which retrieves relevant chunks and generates answers
 4. FastAPI backend (`src/app/api.py`) provides REST endpoints for chat, document management
@@ -41,7 +42,6 @@ export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 - **ChromaDB**: Vector database stored in `data/chroma/` (persistent)
 - **SQLite**: Document metadata in `data/documents.db`
 - **File uploads**: Stored in `data/uploads/`
-- **Raw documents**: Initially in `data/raw/`
 
 ### API Design
 FastAPI backend follows RESTful conventions:

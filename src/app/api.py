@@ -6,6 +6,7 @@ import logging
 from src.core.rag_engine import main as rag_main
 from src.core.document_service import document_service
 from src.core.database import db_manager
+from src.ingestion.ingest import process_single_document
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -278,6 +279,44 @@ async def delete_document(document_id: int):
         raise
     except Exception as e:
         logger.error(f"Unexpected error in delete_document: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+@app.post("/documents/{document_id}/process", response_model=DocumentResponse)
+async def process_document(document_id: int):
+    """
+    Process a document for vector store indexing.
+    
+    Args:
+        document_id: The ID of the document to process
+        
+    Returns:
+        DocumentResponse with processing status
+    """
+    try:
+        # Get document details
+        document = db_manager.get_document(document_id)
+        if not document:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Document with ID {document_id} not found"
+            )
+        
+        # Process document for vector store
+        processing_result = process_single_document(document["file_path"], document_id)
+        
+        return DocumentResponse(
+            status=processing_result["status"],
+            message=processing_result["message"],
+            document=document
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in process_document: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"

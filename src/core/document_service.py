@@ -3,10 +3,11 @@ import shutil
 import uuid
 import logging
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Dict
 from fastapi import UploadFile, HTTPException, status
 from src.core.config import settings
 from src.core.database import db_manager
+from src.ingestion.ingest import process_single_document
 
 logger = logging.getLogger(__name__)
 
@@ -95,11 +96,38 @@ class DocumentService:
             # Get the created document
             document = db_manager.get_document(document_id)
             
-            return {
+            # Process document for vector store (if supported file type)
+            processing_result = None
+            if file_extension in [".txt", ".md"]:  # Only process supported types
+                try:
+                    processing_result = process_single_document(file_path, document_id)
+                    logger.info(f"Vector processing result: {processing_result}")
+                except Exception as e:
+                    logger.error(f"Error processing document for vector store: {str(e)}")
+                    processing_result = {
+                        "status": "error", 
+                        "message": f"Vector processing failed: {str(e)}"
+                    }
+            
+            # Prepare response
+            response = {
                 "status": "success",
                 "document": document,
                 "message": "Document uploaded successfully"
             }
+            
+            # Add processing info if applicable
+            if processing_result:
+                if processing_result["status"] == "success":
+                    response["message"] += " and indexed for search"
+                    response["vector_processing"] = processing_result
+                else:
+                    response["message"] += " but indexing failed"
+                    response["vector_processing"] = processing_result
+            else:
+                response["message"] += " (indexing not supported for this file type)"
+            
+            return response
             
         except HTTPException:
             raise

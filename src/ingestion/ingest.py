@@ -1,11 +1,17 @@
 import os
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Optional
 import chromadb
 from src.core.config import settings
+import logging
+import asyncio
 
-RAW_DATA_DIR = Path("data/raw")
-SUPPORTED_EXTENSIONS = {".txt", ".md"}
+# Set up logging
+logger = logging.getLogger(__name__)
+
+RAW_DATA_DIR = Path(settings.UPLOAD_DIRECTORY)
+UPLOAD_DATA_DIR = Path(settings.UPLOAD_DIRECTORY)
+SUPPORTED_EXTENSIONS = {".txt", ".md"}  # Basic support for now
 CHROMA_PERSIST_DIR = Path(settings.CHROMA_PERSIST_DIRECTORY)
 
 def list_documents(directory: Path = RAW_DATA_DIR) -> List[Path]:
@@ -62,6 +68,7 @@ def store_chunks_in_chroma(chunks: List[Dict], collection_name: str = "documents
             "filepath": chunk["filepath"],
             "filetype": chunk["filetype"],
             "chunk_id": chunk["chunk_id"],
+            "original_filename": chunk.get("original_filename", chunk["filename"]),
         } for chunk in batch]
         ids = [f"{chunk['filename']}_{chunk['chunk_id']}" for chunk in batch]
         
@@ -78,6 +85,65 @@ def store_chunks_in_chroma(chunks: List[Dict], collection_name: str = "documents
     count = collection.count()
     print(f"Collection now contains {count} total documents")
 
+def process_single_document(file_path: str, document_id: Optional[int] = None) -> Dict[str, str]:
+    """Process a single document file and add it to the vector store."""
+    try:
+        path = Path(file_path)
+        if not path.exists():
+            return {
+                "status": "error",
+                "message": f"File not found: {file_path}"
+            }
+        
+        if path.suffix not in SUPPORTED_EXTENSIONS:
+            return {
+                "status": "error", 
+                "message": f"Unsupported file type: {path.suffix}. Supported types: {', '.join(SUPPORTED_EXTENSIONS)}"
+            }
+        
+        logger.info(f"Processing document: {file_path}")
+        doc = load_document(path)
+        
+        # Get original filename if document_id is provided
+        original_filename = None
+        if document_id:
+            from src.core.database import db_manager
+            document_record = db_manager.get_document(document_id)
+            if document_record:
+                original_filename = document_record.get("original_filename")
+        
+        if not doc["content"].strip():
+            return {
+                "status": "error",
+                "message": f"Empty file: {path.name}"
+            }
+        
+        chunks = chunk_document(doc)
+        
+        # Add document_id and original_filename to chunks if provided
+        if document_id:
+            for chunk in chunks:
+                chunk["document_id"] = document_id
+                if original_filename:
+                    chunk["original_filename"] = original_filename
+        
+        store_chunks_in_chroma(chunks)
+        
+        logger.info(f"Successfully processed document: {path.name} ({len(chunks)} chunks)")
+        return {
+            "status": "success",
+            "message": f"Successfully processed {path.name}",
+            "chunks_created": len(chunks)
+        }
+        
+    except Exception as e:
+        error_msg = f"Error processing {file_path}: {str(e)}"
+        logger.error(error_msg)
+        return {
+            "status": "error",
+            "message": error_msg
+        }
+
 def process_documents(file_paths: List[str]) -> Dict[str, str]:
     """Process a list of document files and add them to the vector store."""
     try:
@@ -85,23 +151,11 @@ def process_documents(file_paths: List[str]) -> Dict[str, str]:
         errors = []
         
         for file_path in file_paths:
-            try:
-                path = Path(file_path)
-                if path.suffix not in SUPPORTED_EXTENSIONS:
-                    errors.append(f"Unsupported file type: {path.suffix}")
-                    continue
-                
-                doc = load_document(path)
-                if not doc["content"].strip():
-                    errors.append(f"Empty file: {path.name}")
-                    continue
-                
-                chunks = chunk_document(doc)
-                store_chunks_in_chroma(chunks)
+            result = process_single_document(file_path)
+            if result["status"] == "success":
                 processed_count += 1
-                
-            except Exception as e:
-                errors.append(f"Error processing {file_path}: {str(e)}")
+            else:
+                errors.append(result["message"])
         
         if processed_count > 0:
             return {

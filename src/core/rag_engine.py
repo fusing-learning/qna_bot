@@ -61,7 +61,7 @@ def retrieve_relevant_chunks(query: str, collection_name: str = "documents", n_r
         # Print retrieved chunks for debugging
         for i, chunk in enumerate(chunks, 1):
             print(f"\nChunk {i}:")
-            print(f"Source: {chunk['metadata'].get('filename', 'Unknown')}")
+            print(f"Source: {chunk['metadata'].get('original_filename', chunk['metadata'].get('filename', 'Unknown'))}")
             print(f"Relevance: {chunk['relevance_score']:.2f}")
             print(f"Content: {chunk['content'][:200]}...")  # Print first 200 chars
         
@@ -86,7 +86,7 @@ Answer: I don't have any relevant information to answer this question. Please tr
     # Format context with source information
     context_parts = []
     for i, chunk in enumerate(chunks, 1):
-        source = chunk["metadata"].get("filename", "Unknown source")
+        source = chunk["metadata"].get("original_filename", chunk["metadata"].get("filename", "Unknown source"))
         context_parts.append(f"[Source {i}: {source}]\n{chunk['content']}")
     
     context = "\n\n".join(context_parts)
@@ -159,7 +159,7 @@ def main(query: str) -> Dict[str, str]:
             cited_sources = []
             for i, chunk in enumerate(chunks, 1):
                 if i in source_numbers:
-                    cited_sources.append(chunk["metadata"].get("filename", "Unknown"))
+                    cited_sources.append(chunk["metadata"].get("original_filename", chunk["metadata"].get("filename", "Unknown")))
             
             # Format the final output
             formatted_answer = result["answer"].strip()
