@@ -16,6 +16,17 @@ class Settings(BaseSettings):
     # Vector Store Configuration
     CHROMA_PERSIST_DIRECTORY: str = "./data/chroma"
     
+    # Database Configuration
+    DATABASE_URL: str = "sqlite:///./data/documents.db"
+    
+    # File Upload Configuration
+    UPLOAD_DIRECTORY: str = "./data/uploads"
+    MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
+    MAX_BATCH_SIZE: int = 100 * 1024 * 1024  # 100MB
+    ALLOWED_FILE_TYPES: list = [
+        ".txt", ".md", ".pdf", ".docx", ".pptx", ".xlsx", ".csv"
+    ]
+    
     # API Configuration
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000

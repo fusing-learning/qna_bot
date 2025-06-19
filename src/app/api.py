@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, UploadFile, File, Form, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional
 import logging
 from src.core.rag_engine import main as rag_main
+from src.core.document_service import document_service
+from src.core.database import db_manager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,6 +41,13 @@ class ChatResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     message: str
+
+class DocumentResponse(BaseModel):
+    status: str
+    document: Optional[dict] = None
+    documents: Optional[List[dict]] = None
+    stats: Optional[dict] = None
+    message: Optional[str] = None
 
 @app.get("/", response_model=HealthResponse)
 async def root():
@@ -127,6 +136,151 @@ async def list_collections():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error listing collections: {str(e)}"
+        )
+
+# Document Management Endpoints
+@app.post("/documents/upload", response_model=DocumentResponse)
+async def upload_document(
+    file: UploadFile = File(...),
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    area: Optional[str] = Form(None)
+):
+    """
+    Upload a document to the knowledge base.
+    
+    Args:
+        file: The document file to upload
+        title: Optional title for the document
+        description: Optional description of the document
+        area: Optional area/category for the document
+        
+    Returns:
+        DocumentResponse with upload status and document info
+    """
+    try:
+        logger.info(f"Processing document upload: {file.filename}")
+        
+        result = await document_service.upload_document(
+            file=file,
+            title=title,
+            description=description,
+            area=area
+        )
+        
+        return DocumentResponse(**result)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in upload_document: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+@app.get("/documents", response_model=DocumentResponse)
+async def list_documents(
+    limit: int = Query(100, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    area: Optional[str] = Query(None)
+):
+    """
+    List documents in the knowledge base.
+    
+    Args:
+        limit: Maximum number of documents to return
+        offset: Number of documents to skip
+        area: Optional filter by area/category
+        
+    Returns:
+        DocumentResponse with list of documents and stats
+    """
+    try:
+        result = document_service.list_documents(
+            limit=limit,
+            offset=offset,
+            area=area
+        )
+        
+        return DocumentResponse(**result)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in list_documents: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+@app.get("/documents/stats", response_model=DocumentResponse)
+async def get_document_stats():
+    """
+    Get document statistics.
+    
+    Returns:
+        DocumentResponse with document statistics
+    """
+    try:
+        result = document_service.get_document_stats()
+        return DocumentResponse(**result)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in get_document_stats: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+@app.get("/documents/{document_id}", response_model=DocumentResponse)
+async def get_document(document_id: int):
+    """
+    Get a specific document by ID.
+    
+    Args:
+        document_id: The ID of the document to retrieve
+        
+    Returns:
+        DocumentResponse with document details
+    """
+    try:
+        result = document_service.get_document(document_id)
+        return DocumentResponse(**result)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in get_document: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+@app.delete("/documents/{document_id}", response_model=DocumentResponse)
+async def delete_document(document_id: int):
+    """
+    Delete a document (soft delete).
+    
+    Args:
+        document_id: The ID of the document to delete
+        
+    Returns:
+        DocumentResponse with deletion status
+    """
+    try:
+        result = document_service.delete_document(document_id)
+        return DocumentResponse(**result)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in delete_document: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
         )
 
 # Error handlers

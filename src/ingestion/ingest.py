@@ -78,6 +78,51 @@ def store_chunks_in_chroma(chunks: List[Dict], collection_name: str = "documents
     count = collection.count()
     print(f"Collection now contains {count} total documents")
 
+def process_documents(file_paths: List[str]) -> Dict[str, str]:
+    """Process a list of document files and add them to the vector store."""
+    try:
+        processed_count = 0
+        errors = []
+        
+        for file_path in file_paths:
+            try:
+                path = Path(file_path)
+                if path.suffix not in SUPPORTED_EXTENSIONS:
+                    errors.append(f"Unsupported file type: {path.suffix}")
+                    continue
+                
+                doc = load_document(path)
+                if not doc["content"].strip():
+                    errors.append(f"Empty file: {path.name}")
+                    continue
+                
+                chunks = chunk_document(doc)
+                store_chunks_in_chroma(chunks)
+                processed_count += 1
+                
+            except Exception as e:
+                errors.append(f"Error processing {file_path}: {str(e)}")
+        
+        if processed_count > 0:
+            return {
+                "status": "success",
+                "message": f"Processed {processed_count} documents successfully",
+                "processed_count": processed_count,
+                "errors": errors
+            }
+        else:
+            return {
+                "status": "error",
+                "message": "No documents were processed successfully",
+                "errors": errors
+            }
+            
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Error in process_documents: {str(e)}"
+        }
+
 def main():
     docs = list_documents()
     print(f"Found {len(docs)} supported documents in {RAW_DATA_DIR}.")
