@@ -60,6 +60,10 @@ This phase adds a simple web interface and basic document management capabilitie
 - [ ] **5.2 Implement document listing**
   - [ ] Show uploaded documents
   - [ ] Basic document metadata display
+  - [ ] Ensure all UI elements function, eg view and delete buttons
+
+- [ ] **5.3 Consolidate admin and app UI**
+  - [ ] Update README.md based on latest implementations
 
 ## Phase 3: Enhanced Features & Error Handling
 This phase adds more robust features and error handling.
