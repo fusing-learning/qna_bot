@@ -52,10 +52,10 @@ This phase adds a simple web interface and basic document management capabilitie
   - [x] Set up basic error handling
 
 ### 5.0 Basic Document Management
-- [ ] **5.1 Implement document upload**
-  - [ ] Basic file upload interface
-  - [ ] File type validation
-  - [ ] Size limit enforcement
+- [x] **5.1 Implement document upload**
+  - [x] Basic file upload interface
+  - [x] File type validation
+  - [x] Size limit enforcement
 
 - [ ] **5.2 Implement document listing**
   - [ ] Show uploaded documents
