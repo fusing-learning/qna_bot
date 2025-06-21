@@ -233,8 +233,8 @@ def show_document_list():
     """Show the document list page."""
     st.header("📋 Document List")
     
-    # Filters
-    col1, col2, col3 = st.columns(3)
+    # Filters and Pagination
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         area_filter = st.selectbox(
             "Filter by Area",
@@ -245,63 +245,177 @@ def show_document_list():
         limit = st.selectbox("Documents per page", [10, 25, 50, 100])
     
     with col3:
+        # Initialize pagination in session state
+        if 'current_page' not in st.session_state:
+            st.session_state.current_page = 0
+        
+        # Get current page from session state
+        current_page = st.session_state.current_page
+        offset = current_page * limit
+        
+        st.write(f"Page: {current_page + 1}")
+    
+    with col4:
         if st.button("Refresh"):
             st.rerun()
     
     # Get documents
     area_param = None if area_filter == "All" else area_filter
-    docs_data = get_documents(limit=limit, area=area_param)
+    docs_data = get_documents(limit=limit, offset=offset, area=area_param)
     
     if docs_data and docs_data.get("status") == "success":
         documents = docs_data.get("documents", [])
         stats = docs_data.get("stats", {})
         
-        # Show stats
-        st.info(f"Showing {len(documents)} of {stats.get('total_documents', 0)} documents")
+        # Show stats and pagination info
+        total_docs = stats.get('total_documents', 0)
+        total_pages = (total_docs + limit - 1) // limit if total_docs > 0 else 1
+        
+        st.info(f"Showing {len(documents)} of {total_docs} documents (Page {current_page + 1} of {total_pages})")
+        
+        # Pagination controls
+        if total_pages > 1:
+            col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+            
+            with col1:
+                if st.button("⏮️ First", disabled=current_page == 0):
+                    st.session_state.current_page = 0
+                    st.rerun()
+            
+            with col2:
+                if st.button("⏪ Previous", disabled=current_page == 0):
+                    st.session_state.current_page = max(0, current_page - 1)
+                    st.rerun()
+            
+            with col3:
+                st.write(f"Page {current_page + 1} of {total_pages}")
+            
+            with col4:
+                if st.button("Next ⏩", disabled=current_page >= total_pages - 1):
+                    st.session_state.current_page = min(total_pages - 1, current_page + 1)
+                    st.rerun()
+            
+            with col5:
+                if st.button("Last ⏭️", disabled=current_page >= total_pages - 1):
+                    st.session_state.current_page = total_pages - 1
+                    st.rerun()
         
         if documents:
-            # Create DataFrame for display
-            df_data = []
-            for doc in documents:
-                df_data.append({
-                    "ID": doc.get("id"),
-                    "Filename": doc.get("original_filename", "Unknown"),
-                    "Title": doc.get("title", "N/A"),
-                    "Area": doc.get("area", "N/A"),
-                    "Size": format_file_size(doc.get("file_size", 0)),
-                    "Type": doc.get("file_type", "N/A"),
-                    "Uploaded": format_date(doc.get("uploaded_at", "")),
-                    "Actions": f"View | Delete"
-                })
+            # Bulk actions
+            st.subheader("Bulk Actions")
+            col1, col2, col3 = st.columns([1, 1, 2])
             
-            df = pd.DataFrame(df_data)
-            st.dataframe(df, use_container_width=True)
-            
-            # Document actions
-            st.subheader("Document Actions")
-            doc_id = st.number_input("Enter Document ID", min_value=1, step=1)
-            
-            col1, col2 = st.columns(2)
             with col1:
-                if st.button("View Document Details"):
-                    if doc_id:
-                        doc_data = requests.get(f"{API_BASE_URL}/documents/{doc_id}")
+                select_all = st.checkbox("Select All")
+            
+            with col2:
+                if st.button("Delete Selected", type="secondary"):
+                    selected_docs = [doc_id for doc_id in st.session_state.get('selected_docs', []) if st.session_state.get(f'select_{doc_id}', False)]
+                    if selected_docs:
+                        st.session_state['confirm_bulk_delete'] = selected_docs
+            
+            with col3:
+                if st.session_state.get('confirm_bulk_delete'):
+                    st.warning(f"Delete {len(st.session_state['confirm_bulk_delete'])} documents?")
+                    col3a, col3b = st.columns(2)
+                    with col3a:
+                        if st.button("Confirm Bulk Delete", type="primary"):
+                            deleted_count = 0
+                            for doc_id in st.session_state['confirm_bulk_delete']:
+                                if delete_document(doc_id):
+                                    deleted_count += 1
+                            st.success(f"Deleted {deleted_count} documents!")
+                            st.session_state['confirm_bulk_delete'] = None
+                            st.session_state['selected_docs'] = []
+                            st.rerun()
+                    with col3b:
+                        if st.button("Cancel Bulk Delete"):
+                            st.session_state['confirm_bulk_delete'] = None
+                            st.rerun()
+            
+            # Initialize selected_docs if not exists
+            if 'selected_docs' not in st.session_state:
+                st.session_state['selected_docs'] = []
+            
+            # Create DataFrame for display with checkboxes
+            st.subheader("Documents")
+            for doc in documents:
+                col1, col2, col3, col4, col5 = st.columns([0.5, 2, 1, 1, 1])
+                
+                with col1:
+                    # Handle select all
+                    if select_all:
+                        st.session_state[f'select_{doc["id"]}'] = True
+                    
+                    selected = st.checkbox("", key=f'select_{doc["id"]}', value=st.session_state.get(f'select_{doc["id"]}', False))
+                    if selected and doc["id"] not in st.session_state['selected_docs']:
+                        st.session_state['selected_docs'].append(doc["id"])
+                    elif not selected and doc["id"] in st.session_state['selected_docs']:
+                        st.session_state['selected_docs'].remove(doc["id"])
+                
+                with col2:
+                    st.write(f"**{doc.get('original_filename', 'Unknown')}**")
+                    st.write(f"_{doc.get('title', 'No title')}_ | {doc.get('area', 'No area')} | {format_file_size(doc.get('file_size', 0))}")
+                
+                with col3:
+                    st.write(f"**ID:** {doc.get('id')}")
+                    st.write(f"**Type:** {doc.get('file_type', 'N/A')}")
+                
+                with col4:
+                    st.write(f"**Uploaded:**")
+                    st.write(f"{format_date(doc.get('uploaded_at', ''))}")
+                
+                with col5:
+                    if st.button("View", key=f"view_{doc['id']}"):
+                        st.session_state[f"show_details_{doc['id']}"] = not st.session_state.get(f"show_details_{doc['id']}", False)
+                    
+                    if st.button("Delete", key=f"delete_btn_{doc['id']}", type="secondary"):
+                        st.session_state[f"confirm_delete_{doc['id']}"] = True
+                
+                # Show confirmation dialog
+                if st.session_state.get(f"confirm_delete_{doc['id']}", False):
+                    st.warning(f"Delete {doc.get('original_filename')}?")
+                    col5a, col5b = st.columns(2)
+                    with col5a:
+                        if st.button("Confirm", key=f"confirm_{doc['id']}", type="primary"):
+                            if delete_document(doc['id']):
+                                st.success(f"Document deleted!")
+                                st.session_state[f"confirm_delete_{doc['id']}"] = False
+                                st.rerun()
+                    with col5b:
+                        if st.button("Cancel", key=f"cancel_{doc['id']}"):
+                            st.session_state[f"confirm_delete_{doc['id']}"] = False
+                            st.rerun()
+                
+                # Show document details if requested
+                if st.session_state.get(f"show_details_{doc['id']}", False):
+                    with st.expander(f"Details for {doc.get('original_filename')}", expanded=True):
+                        doc_data = requests.get(f"{API_BASE_URL}/documents/{doc['id']}")
                         if doc_data.status_code == 200:
                             doc_info = doc_data.json()
                             if doc_info.get("status") == "success":
-                                st.json(doc_info.get("document", {}))
+                                doc_details = doc_info.get("document", {})
+                                
+                                detail_col1, detail_col2 = st.columns(2)
+                                with detail_col1:
+                                    st.write(f"**Original Filename:** {doc_details.get('original_filename')}")
+                                    st.write(f"**Title:** {doc_details.get('title', 'N/A')}")
+                                    st.write(f"**Description:** {doc_details.get('description', 'N/A')}")
+                                    st.write(f"**Area:** {doc_details.get('area', 'N/A')}")
+                                
+                                with detail_col2:
+                                    st.write(f"**File Size:** {format_file_size(doc_details.get('file_size', 0))}")
+                                    st.write(f"**File Type:** {doc_details.get('file_type', 'N/A')}")
+                                    st.write(f"**Uploaded:** {format_date(doc_details.get('uploaded_at', ''))}")
+                                    st.write(f"**Version:** {doc_details.get('version', 1)}")
+                                
+                                st.write(f"**File Path:** `{doc_details.get('file_path', 'N/A')}`")
                             else:
-                                st.error("Document not found.")
+                                st.error("Failed to load document details.")
                         else:
                             st.error("Failed to fetch document details.")
-            
-            with col2:
-                if st.button("Delete Document"):
-                    if doc_id:
-                        if st.checkbox("I confirm I want to delete this document"):
-                            if delete_document(doc_id):
-                                st.success("Document deleted successfully!")
-                                st.rerun()
+                
+                st.divider()
         else:
             st.info("No documents found.")
     else:
