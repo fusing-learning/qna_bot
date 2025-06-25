@@ -68,33 +68,28 @@ This phase adds a simple web interface and basic document management capabilitie
 ## Phase 3: Enhanced Features & Error Handling
 This phase adds more robust features and error handling.
 
-### 6.0 Enhanced Document Processing
-- [ ] **6.1 Add support for additional file types**
+### 6.0 Enhanced Chat
+- [ ] **6.1 Allow users to clear and start a new chat**
+
+### 7.0 Enhanced Document Processing
+- [ ] **7.1 Add support for additional file types**
   - [ ] PDF, DOCX, XLSX, PPTX, CSV
 
-- [ ] **6.2 Implement document versioning**
+- [ ] **7.2 Implement document versioning**
   - [ ] Basic version tracking
   - [ ] Version metadata storage
 
-### 7.0 Error Handling & Validation
-- [ ] **7.1 Implement comprehensive error handling**
+- [ ] **7.3 How to handle document deletion involving active chat**
+
+### 8.0 Enhanced Admin Portal
+- [ ] **8.1 Implement API key and model selection**
+
+### 9.0 Error Handling & Validation
+- [ ] Check what are the error handling that are missing, come up with task list and implement. Some backlogs
   - [ ] API error handling
   - [ ] File processing errors
-  - [ ] User input validation
+  - [ ] Question length limits / chat input field limits
+  - [ ] For upload documents, how to handle duplicated filename and document title
 
-- [ ] **7.2 Add input limitations**
-  - [ ] Question length limits
-  - [ ] Chat input field limits
-
-## Phase 4: Advanced Features & Polish
-This phase adds more advanced features and polishes the user experience.
-
-### 8.0 Advanced Features
-- [ ] **8.1 Implement rate limiting**
-- [ ] **8.2 Add user feedback mechanism**
-- [ ] **8.3 Implement analytics tracking**
-
-### 9.0 UI/UX Polish
-- [ ] **9.1 Enhance chat interface**
-- [ ] **9.2 Improve document management interface**
-- [ ] **9.3 Add loading states and better error messages**
+### 10.0 Others
+- [ ] Change frontend stacks from Streamlit to something else?

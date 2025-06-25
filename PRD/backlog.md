@@ -1,4 +1,0 @@
-- [ ] Unable to select individual document in Document List
-- [ ] Add option for user to clear and start a new chat
-- [ ] Add API key and model name (free-text) in Settings, and to use that instead
-- [ ] Check if current logic handles duplicates, eg duplicated filename and document title
