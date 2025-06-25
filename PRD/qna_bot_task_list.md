@@ -75,8 +75,8 @@ This phase adds more robust features and error handling.
 - [ ] **7.1 Support multiple file uploads**
   - [ ] Allow users to upload multiple documents at once
 
-- [ ] **7.2 Add support for additional file types**
-  - [ ] PDF, DOCX, XLSX, PPTX, CSV
+  - [ ] **7.2 Add support for additional file types**
+    - [ ] PDF, DOCX, XLSX, PPTX, CSV
 
 - [ ] **7.3 Implement document versioning**
   - [ ] Basic version tracking
@@ -87,12 +87,15 @@ This phase adds more robust features and error handling.
 ### 8.0 Enhanced Admin Portal
 - [ ] **8.1 Implement API key and model selection**
 
-### 9.0 Error Handling & Validation
-- [ ] Check what are the error handling that are missing, come up with task list and implement. Some backlogs
+### 9.0 Implement User Login
+- [ ] **9.1 Consider whether to implement user login to differentiate admin and user**
+
+### 10.0 Error Handling & Validation
+- [ ] **Check what are the error handling that are missing, come up with task list and implement. Some backlogs:**
   - [ ] API error handling
   - [ ] File processing errors
   - [ ] Question length limits / chat input field limits
   - [ ] For upload documents, how to handle duplicated filename and document title
 
-### 10.0 Others
+### 11.0 Others
 - [ ] Change frontend stacks from Streamlit to something else?
