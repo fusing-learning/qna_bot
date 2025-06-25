@@ -75,3 +75,25 @@ All settings are managed through `src/core/config.py` using Pydantic settings wi
 
 ### Testing
 Test files are in `tests/` directory. Use `pytest` to run all tests or specify individual test files.
+
+## Project Structure
+
+### Data Storage
+- `data/raw/`: Place source documents for ingestion
+- `data/uploads/`: API-uploaded documents
+- `data/chroma/`: ChromaDB vector database (persistent)
+- `data/documents.db`: SQLite database for document metadata
+
+### Key File Locations
+- **Main UI**: `src/ui/app.py` - Unified Streamlit interface (chat + admin)
+- **Admin UI**: `src/ui/admin.py` - Standalone admin interface (deprecated)
+- **API Server**: `src/app/api.py` - FastAPI backend
+- **Scripts**: `scripts/` - Shell scripts for common operations
+
+### Interface Integration
+The main UI (`src/ui/app.py`) provides a unified interface with sidebar navigation between:
+- Chat interface for Q&A
+- Dashboard with system metrics
+- Document upload functionality
+- Document list management
+- Settings configuration
