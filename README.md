@@ -24,6 +24,12 @@ A question-answering chatbot that provides answers based on internal documents.
    pytest tests/
    ```
 
+5. To start the servers:
+   ```bash
+   bash scripts/run_api.sh # To activate the API
+   bash scripts/run_app.sh # To activate the unified web interface (chat + admin)
+   ```
+
 ## Project Structure
 
 ```
@@ -37,9 +43,15 @@ qna_bot/
 │   ├── app/             # FastAPI application
 │   ├── core/            # Core functionality
 │   ├── ingestion/       # Document processing
-│   └── ui/              # Streamlit interface
+│   └── ui/              # Streamlit interface (unified chat & admin)
 └── tests/               # Test files
 ```
+
+## Usage
+
+- The unified Streamlit web interface provides both the chat (Q&A) and document management (admin) features.
+- Use the sidebar navigation to switch between Chat, Dashboard, Upload Documents, Document List, and Settings.
+- All document upload, listing, and management features are now accessible from the same interface as the chat.
 
 ## Development
 

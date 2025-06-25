@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status, UploadFile, File, Form, Query
+from fastapi import FastAPI, HTTPException, status, UploadFile, File, Form, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -49,6 +49,11 @@ class DocumentResponse(BaseModel):
     documents: Optional[List[dict]] = None
     stats: Optional[dict] = None
     message: Optional[str] = None
+
+class DocumentUpdateRequest(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    area: Optional[str] = None
 
 @app.get("/", response_model=HealthResponse)
 async def root():
@@ -160,17 +165,20 @@ async def upload_document(
         DocumentResponse with upload status and document info
     """
     try:
+        # Change: Make Title a required field for document upload (Test 3b)
+        if not title or title.strip() == "":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Title is required for document upload."
+            )
         logger.info(f"Processing document upload: {file.filename}")
-        
         result = await document_service.upload_document(
             file=file,
             title=title,
             description=description,
             area=area
         )
-        
         return DocumentResponse(**result)
-        
     except HTTPException:
         raise
     except Exception as e:
@@ -317,6 +325,31 @@ async def process_document(document_id: int):
         raise
     except Exception as e:
         logger.error(f"Unexpected error in process_document: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+@app.put("/documents/{document_id}", response_model=DocumentResponse)
+async def update_document(
+    document_id: int,
+    update: DocumentUpdateRequest = Body(...)
+):
+    """
+    Update document metadata (title, description, area).
+    """
+    try:
+        result = document_service.update_document(
+            document_id=document_id,
+            title=update.title,
+            description=update.description,
+            area=update.area
+        )
+        return DocumentResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in update_document: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"

@@ -57,13 +57,13 @@ This phase adds a simple web interface and basic document management capabilitie
   - [x] File type validation
   - [x] Size limit enforcement
 
-- [ ] **5.2 Implement document listing**
-  - [ ] Show uploaded documents
-  - [ ] Basic document metadata display
-  - [ ] Ensure all UI elements function, eg view and delete buttons
+- [x]] **5.2 Implement document listing**
+  - [x]] Show uploaded documents
+  - [x]] Basic document metadata display
+  - [x] Ensure all UI elements function, eg view and delete buttons
 
-- [ ] **5.3 Consolidate admin and app UI**
-  - [ ] Update README.md based on latest implementations
+- [x] **5.3 Consolidate admin and app UI**
+  - [x] Update README.md based on latest implementations
 
 ## Phase 3: Enhanced Features & Error Handling
 This phase adds more robust features and error handling.

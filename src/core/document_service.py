@@ -68,6 +68,12 @@ class DocumentService:
                             area: str = None):
         """Upload and process a document."""
         try:
+            # Change: Make Title a required field for document upload (Test 3b)
+            if not title or title.strip() == "":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Title is required for document upload."
+                )
             # Validate file
             is_valid, error_message = self.validate_file(file)
             if not is_valid:
@@ -238,6 +244,43 @@ class DocumentService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error getting document stats: {str(e)}"
+            )
+    
+    def update_document(self, document_id: int, title: str = None, description: str = None, area: str = None):
+        """Update document metadata."""
+        try:
+            # Check if document exists
+            document = db_manager.get_document(document_id)
+            if not document:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Document with ID {document_id} not found"
+                )
+            # Validate area (should not be empty)
+            if area is not None and (not area or area.strip() == ""):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Area/Category is required."
+                )
+            success = db_manager.update_document(document_id, title=title, description=description, area=area)
+            if not success:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Failed to update document metadata."
+                )
+            updated_doc = db_manager.get_document(document_id)
+            return {
+                "status": "success",
+                "document": updated_doc,
+                "message": "Document metadata updated successfully."
+            }
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error updating document {document_id}: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error updating document: {str(e)}"
             )
 
 # Global document service instance

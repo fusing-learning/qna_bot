@@ -149,23 +149,25 @@ def main(query: str) -> Dict[str, str]:
         result = generate_answer(prompt)
         
         if result["status"] == "success":
-            # Extract source numbers from the answer
             import re
+            # Fix: Remove [Source X] from main chat reply (Test 3a)
+            answer_no_sources = re.sub(r'\[Source \d+\]', '', result["answer"]).strip()
+            # Change: Show document Title instead of filename in sources (Test 3b)
             source_numbers = set()
             for match in re.finditer(r'\[Source (\d+)\]', result["answer"]):
                 source_numbers.add(int(match.group(1)))
-            
-            # Only include sources that were actually cited
             cited_sources = []
             for i, chunk in enumerate(chunks, 1):
                 if i in source_numbers:
-                    cited_sources.append(chunk["metadata"].get("original_filename", chunk["metadata"].get("filename", "Unknown")))
-            
-            # Format the final output
-            formatted_answer = result["answer"].strip()
+                    # Prefer title, fallback to filename
+                    title = chunk["metadata"].get("title")
+                    if title and title.strip():
+                        cited_sources.append(title)
+                    else:
+                        cited_sources.append(chunk["metadata"].get("original_filename", chunk["metadata"].get("filename", "Unknown")))
+            formatted_answer = answer_no_sources
             if cited_sources:
                 formatted_answer += f"\n\nSources: {', '.join(cited_sources)}"
-            
             return {
                 "answer": formatted_answer,
                 "status": "success",
