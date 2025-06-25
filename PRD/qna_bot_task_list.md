@@ -72,14 +72,17 @@ This phase adds more robust features and error handling.
 - [ ] **6.1 Allow users to clear and start a new chat**
 
 ### 7.0 Enhanced Document Processing
-- [ ] **7.1 Add support for additional file types**
+- [ ] **7.1 Support multiple file uploads**
+  - [ ] Allow users to upload multiple documents at once
+
+- [ ] **7.2 Add support for additional file types**
   - [ ] PDF, DOCX, XLSX, PPTX, CSV
 
-- [ ] **7.2 Implement document versioning**
+- [ ] **7.3 Implement document versioning**
   - [ ] Basic version tracking
   - [ ] Version metadata storage
 
-- [ ] **7.3 How to handle document deletion involving active chat**
+- [ ] **7.4 How to handle document deletion involving active chat**
 
 ### 8.0 Enhanced Admin Portal
 - [ ] **8.1 Implement API key and model selection**
