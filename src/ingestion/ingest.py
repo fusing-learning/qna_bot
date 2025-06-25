@@ -69,6 +69,7 @@ def store_chunks_in_chroma(chunks: List[Dict], collection_name: str = "documents
             "filetype": chunk["filetype"],
             "chunk_id": chunk["chunk_id"],
             "original_filename": chunk.get("original_filename", chunk["filename"]),
+            "title": chunk.get("title"),
         } for chunk in batch]
         ids = [f"{chunk['filename']}_{chunk['chunk_id']}" for chunk in batch]
         
@@ -104,13 +105,15 @@ def process_single_document(file_path: str, document_id: Optional[int] = None) -
         logger.info(f"Processing document: {file_path}")
         doc = load_document(path)
         
-        # Get original filename if document_id is provided
+        # Get original filename and title if document_id is provided
         original_filename = None
+        title = None
         if document_id:
             from src.core.database import db_manager
             document_record = db_manager.get_document(document_id)
             if document_record:
                 original_filename = document_record.get("original_filename")
+                title = document_record.get("title")
         
         if not doc["content"].strip():
             return {
@@ -120,12 +123,14 @@ def process_single_document(file_path: str, document_id: Optional[int] = None) -
         
         chunks = chunk_document(doc)
         
-        # Add document_id and original_filename to chunks if provided
+        # Add document_id, original_filename, and title to chunks if provided
         if document_id:
             for chunk in chunks:
                 chunk["document_id"] = document_id
                 if original_filename:
                     chunk["original_filename"] = original_filename
+                if title:
+                    chunk["title"] = title
         
         store_chunks_in_chroma(chunks)
         

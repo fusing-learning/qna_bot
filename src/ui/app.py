@@ -245,9 +245,11 @@ def show_document_list():
             col1, col2, col3 = st.columns([1, 1, 2])
             with col1:
                 select_all = st.checkbox("Select All", key="select_all")
-                if not select_all:
+                if select_all:
                     for doc in documents:
-                        st.session_state[f'select_{doc["id"]}'] = False
+                        if doc["id"] not in st.session_state.get('selected_docs', []):
+                            st.session_state.setdefault('selected_docs', []).append(doc["id"])
+                else:
                     st.session_state['selected_docs'] = []
             with col2:
                 if st.button("Delete Selected", type="secondary"):
@@ -280,13 +282,22 @@ def show_document_list():
             for doc in documents:
                 col1, col2, col3, col4, col5, col6 = st.columns([0.5, 2, 1, 1, 1, 1])
                 with col1:
-                    if select_all and doc["id"] not in st.session_state['selected_docs']:
-                        st.session_state['selected_docs'].append(doc["id"])
-                    selected = st.checkbox("", key=f'select_{doc["id"]}', value=doc["id"] in st.session_state['selected_docs'])
-                    if selected and doc["id"] not in st.session_state['selected_docs']:
-                        st.session_state['selected_docs'].append(doc["id"])
-                    elif not selected and doc["id"] in st.session_state['selected_docs']:
-                        st.session_state['selected_docs'].remove(doc["id"])
+                    # Use a simple callback-based approach
+                    def on_checkbox_change():
+                        doc_id = doc["id"]
+                        checkbox_key = f'select_{doc_id}'
+                        if st.session_state.get(checkbox_key, False):
+                            if doc_id not in st.session_state.get('selected_docs', []):
+                                st.session_state.setdefault('selected_docs', []).append(doc_id)
+                        else:
+                            if doc_id in st.session_state.get('selected_docs', []):
+                                st.session_state['selected_docs'].remove(doc_id)
+                    
+                    selected = st.checkbox("Select", 
+                                         key=f'select_{doc["id"]}', 
+                                         value=doc["id"] in st.session_state.get('selected_docs', []),
+                                         label_visibility="hidden",
+                                         on_change=on_checkbox_change)
                 with col2:
                     st.write(f"**{doc.get('original_filename', 'Unknown')}**")
                     st.write(f"_{doc.get('title', 'No title')}_ | {doc.get('area', 'No area')} | {format_file_size(doc.get('file_size', 0))}")
