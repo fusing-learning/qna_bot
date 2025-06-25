@@ -57,9 +57,9 @@ This phase adds a simple web interface and basic document management capabilitie
   - [x] File type validation
   - [x] Size limit enforcement
 
-- [x]] **5.2 Implement document listing**
-  - [x]] Show uploaded documents
-  - [x]] Basic document metadata display
+- [x] **5.2 Implement document listing**
+  - [x] Show uploaded documents
+  - [x] Basic document metadata display
   - [x] Ensure all UI elements function, eg view and delete buttons
 
 - [x] **5.3 Consolidate admin and app UI**
