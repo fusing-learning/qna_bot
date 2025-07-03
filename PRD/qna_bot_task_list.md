@@ -69,14 +69,14 @@ This phase adds a simple web interface and basic document management capabilitie
 This phase adds more robust features and error handling.
 
 ### 6.0 Enhanced Chat
-- [ ] **6.1 Allow users to clear and start a new chat**
+- [x] **6.1 Allow users to clear and start a new chat**
 
 ### 7.0 Enhanced Document Processing
 - [ ] **7.1 Support multiple file uploads**
   - [ ] Allow users to upload multiple documents at once
 
-  - [ ] **7.2 Add support for additional file types**
-    - [ ] PDF, DOCX, XLSX, PPTX, CSV
+- [ ] **7.2 Add support for additional file types**
+  - [ ] PDF, DOCX, XLSX, PPTX, CSV
 
 - [ ] **7.3 Implement document versioning**
   - [ ] Basic version tracking

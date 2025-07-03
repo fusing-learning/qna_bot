@@ -419,6 +419,12 @@ def main():
     )
     if page == "Chat":
         st.title("🤖 QnA Bot")
+        
+        # New Chat button in the sidebar
+        if st.sidebar.button("🔄 New Chat", type="primary"):
+            st.session_state.messages = []
+            st.rerun()
+        
         st.markdown("""
         Welcome to the QnA Bot! Ask questions about your documents, and I'll help you find the answers.
         
